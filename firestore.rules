@@ -57,6 +57,11 @@ service cloud.firestore {
     match /users/{userId} {
       allow read, write: if isAdmin();
     }
+
+    match /roads/{roadId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
     
     // Only admins can see and manage allowed_emails, except users checking their own
     match /allowed_emails/{emailId} {

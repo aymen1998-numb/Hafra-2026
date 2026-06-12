@@ -287,6 +287,9 @@ window.toggleAuth = async function() {
 const map = L.map('map', { center:[28, 1.66], zoom:5, minZoom:4, maxZoom:19, zoomControl:true, touchZoom: true, doubleClickZoom: true, tap: true });
 let currentTileLayer = null;
 
+const roadLayerGroup = L.layerGroup().addTo(map);
+let roads = [];
+
 let liveLocationMarker = null;
 let liveLocationCircle = null;
 const liveLocationIcon = L.divIcon({
@@ -569,6 +572,34 @@ function renderMap() {
       }
     }
   }
+  renderRoads();
+}
+
+// Render Roads
+function renderRoads() {
+  roadLayerGroup.clearLayers();
+  roads.forEach(road => {
+    if (!road.coordinates || !road.coordinates.length) return;
+    let color = '#22C55E'; // green good
+    if (road.quality === 'average' || road.quality === 'fair') color = '#F97316'; // orange
+    else if (road.quality === 'bad') color = '#EF4444'; // red
+    
+    // Draw thick polyline with glow
+    L.polyline(road.coordinates, { color: color, weight: 12, opacity: 0.35, lineCap: 'round', lineJoin: 'round' }).addTo(roadLayerGroup);
+    const poly = L.polyline(road.coordinates, { color: color, weight: 5, opacity: 0.9, lineCap: 'round', lineJoin: 'round' }).addTo(roadLayerGroup);
+    
+    let qualityLabel = 'Bon état';
+    if (road.quality === 'average' || road.quality === 'fair') qualityLabel = 'État moyen';
+    else if (road.quality === 'bad') qualityLabel = 'Mauvais état (Dégradée)';
+
+    const popupHtml = `
+      <div style="font-family: 'Cairo', sans-serif; min-width: 160px; padding: 2px;">
+        <strong style="display: block; font-size: 13px; margin-bottom: 4px; border-bottom: 1px solid var(--bdr); padding-bottom: 4px; color: var(--txt);">${road.name || 'Route'}</strong>
+        <span style="font-size: 11px; color: ${color}; font-weight: 700;">● ${qualityLabel}</span>
+      </div>
+    `;
+    poly.bindPopup(popupHtml, { minWidth: 160 });
+  });
 }
 
 // Stats Header
@@ -582,12 +613,20 @@ function updateStats() {
   document.getElementById('h-bad').textContent = bad;
 }
 
-// Load Reports
+// Load Reports & Roads
 async function loadReports() {
   try {
     const q = query(collection(db, 'reports'), orderBy('createdAt', 'desc'), limit(500));
     const snap = await getDocs(q);
     reports = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    try {
+      const snapRoads = await getDocs(collection(db, 'roads'));
+      roads = snapRoads.docs.map(d => ({ id: d.id, ...d.data() }));
+    } catch (errRoads) {
+      console.warn('[hafra] Load roads failed:', errRoads);
+    }
+
     renderMap(); updateStats(); renderPanel();
   } catch (e) {
     try {

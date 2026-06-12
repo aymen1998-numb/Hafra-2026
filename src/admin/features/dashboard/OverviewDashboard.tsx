@@ -16,7 +16,7 @@ export default function OverviewDashboard() {
       try {
         const q = query(collection(db, 'reports'), orderBy('createdAt', 'desc'), limit(100));
         const snap = await getDocs(q);
-        const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as any));
         
         let total = docs.length;
         let active = 0;
