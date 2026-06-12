@@ -1287,8 +1287,8 @@ window.onPhoto = function onPhoto(input) {
     const img = new Image();
     img.onload = () => {
       const canvas = document.createElement('canvas');
-      const MAX_WIDTH = 800;
-      const MAX_HEIGHT = 800;
+      const MAX_WIDTH = 640;
+      const MAX_HEIGHT = 640;
       let width = img.width;
       let height = img.height;
 
@@ -1309,14 +1309,14 @@ window.onPhoto = function onPhoto(input) {
       const ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0, width, height);
 
-      // Compress photo with 0.5 quality initial target
-      let quality = 0.5;
+      // Compress photo with 0.4 quality initial target
+      let quality = 0.4;
       photoFile = canvas.toDataURL('image/jpeg', quality);
 
-      // Base64 size check: if string length is > 200,000 chars (approx. 150 KB)
-      // dynamically scale down to 0.3 quality to guarantee a very small payload.
-      if (photoFile.length > 200000) {
-        quality = 0.3;
+      // Base64 size check: if string length is > 100,000 chars (approx. 75 KB)
+      // dynamically scale down to 0.2 quality to guarantee a very small payload.
+      if (photoFile.length > 100000) {
+        quality = 0.2;
         photoFile = canvas.toDataURL('image/jpeg', quality);
         console.log(`[hafra] Image compressed to ${Math.round(photoFile.length / 1024)} KB at quality ${quality}`);
       } else {
