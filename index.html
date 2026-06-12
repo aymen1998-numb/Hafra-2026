@@ -54,7 +54,15 @@
   <body>
     <!-- LOADING SCREEN -->
     <div id="app-loading" aria-live="polite" aria-label="Chargement">
-      <div class="al-logo">حفرة</div>
+      <div class="al-logo">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 50" class="hafra-logo-svg" aria-label="حفرة">
+          <path d="M 148 20 L 128 20 L 112 35 L 102 35 C 102 26, 88 26, 88 35 L 78 35 C 70 35, 65 41, 60 45" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+          <circle cx="35" cy="31" r="9" fill="none" stroke="currentColor" stroke-width="5" />
+          <circle cx="95" cy="14" r="3.5" fill="#FF5722" stroke="none" />
+          <circle cx="29" cy="14" r="3.5" fill="#FF5722" stroke="none" />
+          <circle cx="41" cy="14" r="3.5" fill="#FF5722" stroke="none" />
+        </svg>
+      </div>
       <div class="al-sub">HAFRA.DZ</div>
       <div class="al-spin"></div>
     </div>
@@ -82,7 +90,15 @@
         onclick="handleLogoClick()"
         style="display: flex"
       >
-        <span class="logo-ar">حفرة</span>
+        <span class="logo-ar">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 50" class="hafra-logo-svg" aria-label="حفرة">
+            <path d="M 148 20 L 128 20 L 112 35 L 102 35 C 102 26, 88 26, 88 35 L 78 35 C 70 35, 65 41, 60 45" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+            <circle cx="35" cy="31" r="9" fill="none" stroke="currentColor" stroke-width="5" />
+            <circle cx="95" cy="14" r="3.5" fill="#FF5722" stroke="none" />
+            <circle cx="29" cy="14" r="3.5" fill="#FF5722" stroke="none" />
+            <circle cx="41" cy="14" r="3.5" fill="#FF5722" stroke="none" />
+          </svg>
+        </span>
         <span class="logo-sub">Hafra.DZ</span>
       </div>
       <div class="hdr-stats" aria-label="Statistiques">
@@ -169,6 +185,46 @@
       </div>
     </nav>
 
+    <!-- GPS PANEL -->
+    <nav id="gps-panel" class="gps-panel" aria-label="Itinéraire routier sécurisé">
+      <div class="gps-panel-top">
+        <div class="gps-title-row">
+          <div class="gps-panel-title">Routeur Évitement 🧭</div>
+          <button class="gps-close-btn" onclick="window.toggleGPS()" aria-label="Fermer le GPS">✕</button>
+        </div>
+        <div class="gps-panel-sub">Calcul d'itinéraire sans nids-de-poule</div>
+      </div>
+      
+      <div class="gps-body">
+        <div class="gps-input-group">
+          <label class="gps-label" for="gps-start-input">Départ</label>
+          <div class="gps-input-wrapper">
+            <span class="gps-input-icon">🟢</span>
+            <input type="text" id="gps-start-input" placeholder="Ma position GPS ou adresse..." />
+            <button class="gps-action-btn" onclick="window.useGpsCurrentLocation()" title="Ma position actuelle">🎯</button>
+          </div>
+        </div>
+        
+        <div class="gps-input-group">
+          <label class="gps-label" for="gps-end-input">Destination</label>
+          <div class="gps-input-wrapper">
+            <span class="gps-input-icon">🔴</span>
+            <input type="text" id="gps-end-input" placeholder="Rechercher une destination..." />
+            <button class="gps-action-btn" id="gps-select-map-btn" onclick="window.enableMapClickSelection()" title="Sélectionner sur la carte">📍</button>
+          </div>
+        </div>
+        
+        <button class="gps-search-btn" id="gps-submit-btn" onclick="window.calculatePavedRoute()">
+          <span class="gps-search-spin" id="gps-submit-spin" style="display:none;"></span>
+          <span id="gps-submit-text">Calculer l'itinéraire pavé</span>
+        </button>
+
+        <div id="gps-results-container" class="gps-results-container">
+          <!-- Results populated here dynamically -->
+        </div>
+      </div>
+    </nav>
+
     <!-- FAB CLUSTER -->
     <div class="fab-cluster">
       <button
@@ -177,6 +233,14 @@
         aria-label="Ma position GPS"
       >
         📍
+      </button>
+      <button
+        id="btn-gps"
+        onclick="window.toggleGPS()"
+        aria-label="Itinéraire routier évitement"
+        title="Itinéraire Évitement Potholes"
+      >
+        🧭
       </button>
       <button
         id="fab"

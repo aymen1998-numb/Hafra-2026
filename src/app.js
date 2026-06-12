@@ -145,6 +145,13 @@ const ALLOWED_MIME = new Set(['image/jpeg','image/jpg','image/png','image/webp']
 
 // Application State
 let reports = [];
+
+// GPS Routing Engine State
+let gpsActiveRouteLayers = [];
+let gpsStartCoords = null;
+let gpsEndCoords = null;
+let gpsClickSelectionMode = null;
+
 let confirmedIds = new Set();
 try { confirmedIds = new Set(JSON.parse(localStorage.getItem('hf_confirmed') || '[]')); } catch {}
 let showHeat = true, showMarkers = true;
@@ -1110,6 +1117,28 @@ function clearPending() {
 }
 
 map.on('click', e => {
+  if (gpsClickSelectionMode) {
+    const lat = e.latlng.lat;
+    const lng = e.latlng.lng;
+    if (gpsClickSelectionMode === 'end') {
+      gpsEndCoords = [lat, lng];
+      document.getElementById('gps-end-input').value = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+      document.getElementById('gps-select-map-btn').classList.remove('active');
+      gpsClickSelectionMode = null;
+      showToast("Destination définie sur la carte !");
+      
+      if (window.gpsEndMarker) map.removeLayer(window.gpsEndMarker);
+      window.gpsEndMarker = L.marker([lat, lng], {
+        icon: L.divIcon({
+          className: 'gps-marker-end',
+          html: `<div style="background-color: #EF4444; width: 14px; height: 14px; border-radius: 50%; border: 2.5px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.4);"></div>`,
+          iconSize: [14, 14],
+          iconAnchor: [7, 7]
+        })
+      }).addTo(map);
+    }
+    return;
+  }
   if (!addMode) { document.getElementById('panel')?.classList.remove('open'); return; }
   setLocation(e.latlng.lat, e.latlng.lng);
   openModal();
@@ -1735,3 +1764,342 @@ if (navigator.permissions && navigator.geolocation) {
     }
   }).catch(() => {});
 }
+
+// GPS Routing and Pavement Scoring System
+window.toggleGPS = function() {
+  const panel = document.getElementById('gps-panel');
+  const btn = document.getElementById('btn-gps');
+  if (!panel) return;
+  const isOpen = panel.classList.toggle('open');
+  if (isOpen) {
+    btn?.classList.add('active');
+    document.getElementById('panel')?.classList.remove('open');
+  } else {
+    btn?.classList.remove('active');
+    window.clearGPSRoute();
+  }
+};
+
+window.useGpsCurrentLocation = function() {
+  if (!navigator.geolocation) {
+    showToast("Géolocalisation non supportée");
+    return;
+  }
+  navigator.geolocation.getCurrentPosition((pos) => {
+    const lat = pos.coords.latitude;
+    const lng = pos.coords.longitude;
+    gpsStartCoords = [lat, lng];
+    document.getElementById('gps-start-input').value = "Ma position actuelle";
+    showToast("Position de départ définie !");
+  }, (err) => {
+    console.error("Geolocation error:", err);
+    showToast("Impossible de récupérer votre position");
+  });
+};
+
+window.enableMapClickSelection = function() {
+  gpsClickSelectionMode = 'end';
+  document.getElementById('gps-select-map-btn').classList.add('active');
+  showToast("Touchez la carte pour définir la destination");
+};
+
+async function geocode(address) {
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`);
+    const data = await res.json();
+    if (data && data.length > 0) {
+      return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+    }
+  } catch (err) {
+    console.error("Geocoding failed:", err);
+  }
+  return null;
+}
+
+function getDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371e3; // meters
+  const phi1 = lat1 * Math.PI/180;
+  const phi2 = lat2 * Math.PI/180;
+  const deltaPhi = (lat2-lat1) * Math.PI/180;
+  const deltaLambda = (lon2-lon1) * Math.PI/180;
+  const a = Math.sin(deltaPhi/2) * Math.sin(deltaPhi/2) +
+            Math.cos(phi1) * Math.cos(phi2) *
+            Math.sin(deltaLambda/2) * Math.sin(deltaLambda/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+
+window.clearGPSRoute = function() {
+  if (gpsActiveRouteLayers) {
+    gpsActiveRouteLayers.forEach(l => map.removeLayer(l));
+    gpsActiveRouteLayers = [];
+  }
+  if (window.gpsStartMarker) { map.removeLayer(window.gpsStartMarker); window.gpsStartMarker = null; }
+  if (window.gpsEndMarker) { map.removeLayer(window.gpsEndMarker); window.gpsEndMarker = null; }
+  const container = document.getElementById('gps-results-container');
+  if (container) container.innerHTML = '';
+};
+
+window.calculatePavedRoute = async function() {
+  const startInput = document.getElementById('gps-start-input').value;
+  const endInput = document.getElementById('gps-end-input').value;
+  
+  if (!startInput.trim() || !endInput.trim()) {
+    showToast("Veuillez remplir les deux champs");
+    return;
+  }
+  
+  const submitBtn = document.getElementById('gps-submit-btn');
+  const submitSpin = document.getElementById('gps-submit-spin');
+  const submitText = document.getElementById('gps-submit-text');
+  
+  submitBtn.disabled = true;
+  submitSpin.style.display = 'inline-block';
+  submitText.textContent = "Calcul...";
+  
+  try {
+    let startLoc = gpsStartCoords;
+    if (startInput !== "Ma position actuelle" && !startLoc) {
+      startLoc = await geocode(startInput);
+      if (!startLoc) {
+        showToast("Impossible de localiser le départ");
+        return;
+      }
+    } else if (startInput === "Ma position actuelle" && !startLoc) {
+      await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+          pos => {
+            startLoc = [pos.coords.latitude, pos.coords.longitude];
+            resolve();
+          },
+          err => {
+            reject(err);
+          }
+        );
+      }).catch(() => {
+        showToast("Veuillez autoriser la géolocalisation");
+      });
+      if (!startLoc) return;
+    }
+    
+    let endLoc = gpsEndCoords;
+    if (!endLoc || endInput !== `${gpsEndCoords[0].toFixed(5)}, ${gpsEndCoords[1].toFixed(5)}`) {
+      endLoc = await geocode(endInput);
+      if (!endLoc) {
+        showToast("Impossible de localiser la destination");
+        return;
+      }
+    }
+    
+    window.clearGPSRoute();
+    
+    window.gpsStartMarker = L.marker(startLoc, {
+      icon: L.divIcon({
+        className: 'gps-marker-start',
+        html: `<div style="background-color: #22C55E; width: 14px; height: 14px; border-radius: 50%; border: 2.5px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.4);"></div>`,
+        iconSize: [14, 14],
+        iconAnchor: [7, 7]
+      })
+    }).addTo(map);
+    
+    window.gpsEndMarker = L.marker(endLoc, {
+      icon: L.divIcon({
+        className: 'gps-marker-end',
+        html: `<div style="background-color: #EF4444; width: 14px; height: 14px; border-radius: 50%; border: 2.5px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.4);"></div>`,
+        iconSize: [14, 14],
+        iconAnchor: [7, 7]
+      })
+    }).addTo(map);
+    
+    const url = `https://router.project-osrm.org/route/v1/driving/${startLoc[1]},${startLoc[0]};${endLoc[1]},${endLoc[0]}?overview=full&geometries=geojson&alternatives=true`;
+    const response = await fetch(url);
+    const result = await response.json();
+    
+    if (result.code !== 'Ok' || !result.routes || result.routes.length === 0) {
+      showToast("Aucun itinéraire trouvé");
+      return;
+    }
+    
+    const scoredRoutes = result.routes.map((route, index) => {
+      const routeCoords = route.geometry.coordinates.map(pt => [pt[1], pt[0]]);
+      
+      const hitReportIds = new Set();
+      for (const report of reports) {
+        if (report.status === 'resolved' || report.status === 'fixed') continue;
+        
+        for (const routePt of routeCoords) {
+          const dist = getDistance(routePt[0], routePt[1], report.lat, report.lng);
+          if (dist < 35) {
+            hitReportIds.add(report.id);
+            break;
+          }
+        }
+      }
+      
+      let goodRoadOverlap = 0;
+      let badRoadOverlap = 0;
+      for (const road of roads) {
+        let isClose = false;
+        for (const roadPt of road.coordinates) {
+          for (const routePt of routeCoords) {
+            if (getDistance(roadPt[0], roadPt[1], routePt[0], routePt[1]) < 45) {
+              isClose = true;
+              break;
+            }
+          }
+          if (isClose) break;
+        }
+        if (isClose) {
+          if (road.quality === 'good') goodRoadOverlap++;
+          else if (road.quality === 'bad') badRoadOverlap++;
+        }
+      }
+      
+      const potholeCount = hitReportIds.size;
+      const penalty = route.distance + (potholeCount * 1200) + (badRoadOverlap * 600) - (goodRoadOverlap * 400);
+      
+      return {
+        index,
+        route,
+        coordinates: routeCoords,
+        potholeCount,
+        penalty,
+        distanceKm: (route.distance / 1000).toFixed(1),
+        durationMin: Math.ceil(route.duration / 60)
+      };
+    });
+    
+    scoredRoutes.sort((a, b) => a.penalty - b.penalty);
+    
+    const shortestRoute = [...scoredRoutes].sort((a, b) => a.route.distance - b.route.distance)[0];
+    const bestRoute = scoredRoutes[0];
+    const isDetourNecessary = bestRoute.index !== shortestRoute.index && bestRoute.potholeCount < shortestRoute.potholeCount;
+    
+    renderGPSRoutes(scoredRoutes, bestRoute, shortestRoute, isDetourNecessary);
+    renderGPSResultsUI(scoredRoutes, bestRoute, shortestRoute, isDetourNecessary);
+    
+    const allCoords = bestRoute.coordinates;
+    const bounds = L.latLngBounds(allCoords);
+    map.fitBounds(bounds, { padding: [50, 50] });
+    
+  } catch (err) {
+    console.error("GPS route calculation error:", err);
+    showToast("Erreur lors de la recherche");
+  } finally {
+    submitBtn.disabled = false;
+    submitSpin.style.display = 'none';
+    submitText.textContent = "Calculer l'itinéraire pavé";
+  }
+};
+
+function renderGPSRoutes(scoredRoutes, bestRoute, shortestRoute, isDetourNecessary) {
+  gpsActiveRouteLayers.forEach(l => map.removeLayer(l));
+  gpsActiveRouteLayers = [];
+  
+  if (isDetourNecessary) {
+    const bumpyColor = '#94A3B8';
+    const lineBumpyGlow = L.polyline(shortestRoute.coordinates, { color: '#EF4444', weight: 8, opacity: 0.15, dashArray: '5, 10' }).addTo(map);
+    const lineBumpy = L.polyline(shortestRoute.coordinates, { color: bumpyColor, weight: 4, opacity: 0.75, dashArray: '5, 8' }).addTo(map);
+    
+    gpsActiveRouteLayers.push(lineBumpyGlow, lineBumpy);
+    
+    const safeColor = '#2563EB';
+    const lineSafeGlow = L.polyline(bestRoute.coordinates, { color: safeColor, weight: 12, opacity: 0.25 }).addTo(map);
+    const lineSafe = L.polyline(bestRoute.coordinates, { color: safeColor, weight: 6, opacity: 0.95 }).addTo(map);
+    
+    gpsActiveRouteLayers.push(lineSafeGlow, lineSafe);
+  } else {
+    const safeColor = '#10B981';
+    const lineGlow = L.polyline(bestRoute.coordinates, { color: safeColor, weight: 12, opacity: 0.25 }).addTo(map);
+    const line = L.polyline(bestRoute.coordinates, { color: safeColor, weight: 6, opacity: 0.95 }).addTo(map);
+    
+    gpsActiveRouteLayers.push(lineGlow, line);
+  }
+}
+
+function renderGPSResultsUI(scoredRoutes, bestRoute, shortestRoute, isDetourNecessary) {
+  const container = document.getElementById('gps-results-container');
+  if (!container) return;
+  
+  let html = '';
+  if (isDetourNecessary) {
+    html += `
+      <div class="gps-route-card selected" onclick="window.selectRouteHighlight('safe')">
+        <span class="gps-route-badge safe">Recommandé</span>
+        <div class="gps-route-name">Voie Pavée Sécurisée</div>
+        <div class="gps-route-meta">
+          <span>📏 ${bestRoute.distanceKm} km</span>
+          <span>⏱️ ${bestRoute.durationMin} min</span>
+        </div>
+        <div class="gps-route-hazards clean">
+          <span>🛡️ ${shortestRoute.potholeCount - bestRoute.potholeCount} nids-de-poule évités !</span>
+        </div>
+      </div>
+      <div class="gps-route-card" onclick="window.selectRouteHighlight('bumpy')">
+        <span class="gps-route-badge bumpy">Déconseillé</span>
+        <div class="gps-route-name">Voie la Plus Courte</div>
+        <div class="gps-route-meta">
+          <span>📏 ${shortestRoute.distanceKm} km</span>
+          <span>⏱️ ${shortestRoute.durationMin} min</span>
+        </div>
+        <div class="gps-route-hazards dirty">
+          <span>⚠️ Contient ${shortestRoute.potholeCount} nids-de-poule</span>
+        </div>
+      </div>
+    `;
+  } else {
+    html += `
+      <div class="gps-route-card selected">
+        <span class="gps-route-badge safe">Optimal</span>
+        <div class="gps-route-name">Voie Directe (Sans Potholes)</div>
+        <div class="gps-route-meta">
+          <span>📏 ${bestRoute.distanceKm} km</span>
+          <span>⏱️ ${bestRoute.durationMin} min</span>
+        </div>
+        <div class="gps-route-hazards clean">
+          <span>✨ 0 nids-de-poule détectés</span>
+        </div>
+      </div>
+    `;
+  }
+  
+  container.innerHTML = html;
+  window.currentGpsRoutes = { bestRoute, shortestRoute, isDetourNecessary };
+}
+
+window.selectRouteHighlight = function(type) {
+  const cards = document.querySelectorAll('.gps-route-card');
+  cards.forEach(c => c.classList.remove('selected'));
+  
+  const targetCardIdx = type === 'safe' ? 0 : 1;
+  cards[targetCardIdx]?.classList.add('selected');
+  
+  const routes = window.currentGpsRoutes;
+  if (!routes) return;
+  
+  gpsActiveRouteLayers.forEach(l => map.removeLayer(l));
+  gpsActiveRouteLayers = [];
+  
+  if (type === 'safe') {
+    const lineBumpy = L.polyline(routes.shortestRoute.coordinates, { color: '#94A3B8', weight: 3, opacity: 0.3, dashArray: '5, 8' }).addTo(map);
+    const lineSafeGlow = L.polyline(routes.bestRoute.coordinates, { color: '#2563EB', weight: 12, opacity: 0.3 }).addTo(map);
+    const lineSafe = L.polyline(routes.bestRoute.coordinates, { color: '#2563EB', weight: 7, opacity: 0.95 }).addTo(map);
+    
+    gpsActiveRouteLayers.push(lineBumpy, lineSafeGlow, lineSafe);
+  } else {
+    const lineSafe = L.polyline(routes.bestRoute.coordinates, { color: '#3B82F6', weight: 4, opacity: 0.3 }).addTo(map);
+    const lineBumpyGlow = L.polyline(routes.shortestRoute.coordinates, { color: '#EF4444', weight: 10, opacity: 0.3, dashArray: '5, 8' }).addTo(map);
+    const lineBumpy = L.polyline(routes.shortestRoute.coordinates, { color: '#EF4444', weight: 6, opacity: 0.95, dashArray: '5, 8' }).addTo(map);
+    
+    gpsActiveRouteLayers.push(lineSafe, lineBumpyGlow, lineBumpy);
+  }
+};
+
+// Initialize key listener bindings
+setTimeout(() => {
+  const startInput = document.getElementById('gps-start-input');
+  const endInput = document.getElementById('gps-end-input');
+  if (startInput) startInput.addEventListener('keydown', e => { if (e.key === 'Enter') window.calculatePavedRoute(); });
+  if (endInput) endInput.addEventListener('keydown', e => { if (e.key === 'Enter') window.calculatePavedRoute(); });
+}, 2000);
+
