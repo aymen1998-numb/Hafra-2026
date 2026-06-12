@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="fr" dir="ltr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+    <!-- CSP left permissive for Vite during development (you can restrict later) -->
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta name="theme-color" content="#090C12" />
+    <meta
+      name="description"
+      content="Signalez les mauvaises routes en Algérie — بلّغ عن الطرق التالفة في الجزائر"
+    />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta name="apple-mobile-web-app-title" content="حفرة" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="حفرة — Hafra.DZ" />
+    <meta
+      property="og:description"
+      content="Carte citoyenne des routes algériennes"
+    />
+    <meta property="og:url" content="https://hafra.dz" />
+    <meta property="og:type" content="website" />
+
+    <link rel="manifest" href="manifest.json" />
+    <link
+      rel="apple-touch-icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23121214'/%3E%3Ctext y='70' x='50' text-anchor='middle' font-size='60'%3E🚨%3C/text%3E%3C/svg%3E"
+    />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23121214'/%3E%3Ctext y='70' x='50' text-anchor='middle' font-size='60'%3E🚨%3C/text%3E%3C/svg%3E"
+    />
+    <title>حفرة — Hafra.DZ</title>
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <!-- LOADING SCREEN -->
+    <div id="app-loading" aria-live="polite" aria-label="Chargement">
+      <div class="al-logo">حفرة</div>
+      <div class="al-sub">HAFRA.DZ</div>
+      <div class="al-spin"></div>
+    </div>
+
+    <!-- MAP -->
+    <div
+      id="map"
+      role="application"
+      aria-label="Carte des routes algériennes"
+    ></div>
+
+    <!-- HEADER -->
+    <header id="header">
+      <button
+        class="menu-btn"
+        onclick="togglePanel()"
+        aria-label="Ouvrir le menu"
+      >
+        ☰
+      </button>
+      <!-- We just use the structural text logo fallback -->
+      <div
+        class="logo-fallback"
+        id="logo-fallback"
+        onclick="handleLogoClick()"
+        style="display: flex"
+      >
+        <span class="logo-ar">حفرة</span>
+        <span class="logo-sub">Hafra.DZ</span>
+      </div>
+      <div class="hdr-stats" aria-label="Statistiques">
+        <div class="hchip">
+          <span class="hchip-v" id="h-total">—</span
+          ><span class="hchip-l">Signalements</span>
+        </div>
+        <div class="hchip">
+          <span class="hchip-v" id="h-avg" style="color: var(--gold)">—</span
+          ><span class="hchip-l">Moy. ★</span>
+        </div>
+        <div class="hchip">
+          <span class="hchip-v" id="h-bad" style="color: #ef4444">—</span
+          ><span class="hchip-l">Critiques</span>
+        </div>
+      </div>
+      <button
+        class="theme-btn"
+        id="theme-btn"
+        onclick="toggleTheme()"
+        aria-label="Changer de thème"
+      >
+        ☀️
+      </button>
+    </header>
+
+    <!-- CONNECTION PILL -->
+    <div id="conn-pill" role="status">
+      <div class="conn-dot" id="conn-dot"></div>
+      <span id="conn-text">Connecté</span>
+    </div>
+
+    <!-- SIDE PANEL -->
+    <nav id="panel" aria-label="Panneau latéral">
+      <div class="panel-top">
+        <div class="panel-title">Hafra.DZ</div>
+        <div class="panel-sub">signaler · confirmer · améliorer</div>
+      </div>
+      <div class="ptabs" role="tablist">
+        <div
+          class="ptab on"
+          role="tab"
+          aria-selected="true"
+          onclick="setTab('feed', this)"
+        >
+          Fil
+        </div>
+        <div
+          class="ptab"
+          role="tab"
+          aria-selected="false"
+          onclick="setTab('stats', this)"
+        >
+          Stats
+        </div>
+        <div
+          class="ptab"
+          role="tab"
+          aria-selected="false"
+          onclick="setTab('layers', this)"
+        >
+          Carte
+        </div>
+      </div>
+      <div class="pbody" id="pbody" role="tabpanel"></div>
+      <div class="panel-auth" id="panel-auth">
+        <div id="auth-state">Anonyme</div>
+        <button id="auth-btn" class="auth-btn" onclick="window.toggleAuth()">
+          Connexion Google
+        </button>
+        <a
+          href="/admin"
+          class="admin-link"
+          style="
+            display: block;
+            margin-top: 20px;
+            text-align: center;
+            color: var(--dim);
+            font-size: 12px;
+            text-decoration: none;
+          "
+          >Accès Admin</a
+        >
+      </div>
+    </nav>
+
+    <!-- FAB CLUSTER -->
+    <div class="fab-cluster">
+      <button
+        id="btn-locate"
+        onclick="locateBtnClick()"
+        aria-label="Ma position GPS"
+      >
+        📍
+      </button>
+      <button
+        id="fab"
+        onclick="toggleAdd()"
+        aria-label="Ajouter un signalement"
+      >
+        ＋
+      </button>
+    </div>
+    <div id="fab-hint" aria-live="polite">Appuyez sur la carte pour placer</div>
+
+    <!-- REPORT MODAL -->
+    <div
+      id="overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Nouveau signalement"
+    >
+      <div id="overlay-bg" onclick="closeModal()"></div>
+      <div id="modal">
+        <div class="modal-pull"></div>
+        <div class="modal-title">Nouveau signalement</div>
+
+        <!-- LOCATION -->
+        <div class="fhead">Localisation</div>
+        <div class="loc-box">
+          <div class="loc-dot" id="loc-dot"></div>
+          <div class="loc-info">
+            <div class="loc-wilaya" id="loc-wilaya">En attente…</div>
+            <div class="loc-coords" id="loc-coords">—</div>
+          </div>
+          <button class="loc-gps-btn" id="gps-btn" onclick="useMyLocation()">
+            📍 Ma position
+          </button>
+        </div>
+
+        <!-- CATEGORY -->
+        <div class="fhead">Catégorie <span class="req">*</span></div>
+        <div
+          class="cat-grid"
+          id="cat-grid"
+          role="group"
+          aria-label="Type de problème"
+        >
+          <button
+            class="cat-btn"
+            data-cat="pothole"
+            onclick="selCat('pothole', this)"
+            aria-pressed="false"
+          >
+            <span class="cat-ico">🕳</span
+            ><span class="cat-fr">Nid-de-poule</span
+            ><span class="cat-ar">حفرة</span>
+          </button>
+          <button
+            class="cat-btn"
+            data-cat="cracks"
+            onclick="selCat('cracks', this)"
+            aria-pressed="false"
+          >
+            <span class="cat-ico">🪨</span><span class="cat-fr">Fissures</span
+            ><span class="cat-ar">تشققات</span>
+          </button>
+          <button
+            class="cat-btn"
+            data-cat="lighting"
+            onclick="selCat('lighting', this)"
+            aria-pressed="false"
+          >
+            <span class="cat-ico">🌑</span><span class="cat-fr">Éclairage</span
+            ><span class="cat-ar">إضاءة</span>
+          </button>
+          <button
+            class="cat-btn"
+            data-cat="signage"
+            onclick="selCat('signage', this)"
+            aria-pressed="false"
+          >
+            <span class="cat-ico">🚧</span
+            ><span class="cat-fr">Signalisation</span
+            ><span class="cat-ar">لافتات</span>
+          </button>
+          <button
+            class="cat-btn"
+            data-cat="flooding"
+            onclick="selCat('flooding', this)"
+            aria-pressed="false"
+          >
+            <span class="cat-ico">🌊</span><span class="cat-fr">Inondation</span
+            ><span class="cat-ar">فيضان</span>
+          </button>
+          <button
+            class="cat-btn"
+            data-cat="utility"
+            onclick="selCat('utility', this)"
+            aria-pressed="false"
+          >
+            <span class="cat-ico">💧</span
+            ><span class="cat-fr">ADE / SEAAL</span
+            ><span class="cat-ar">أضرار المياه</span>
+          </button>
+        </div>
+
+        <!-- STARS -->
+        <div class="fhead">État de la route <span class="req">*</span></div>
+        <div
+          class="star-row"
+          id="star-row"
+          role="group"
+          aria-label="Note de 1 à 5"
+        >
+          <span
+            class="star-btn"
+            role="button"
+            tabindex="0"
+            aria-label="1 étoile"
+            onclick="setStar(1)"
+            onkeydown="if (event.key === 'Enter') setStar(1);"
+            >⭐</span
+          >
+          <span
+            class="star-btn"
+            role="button"
+            tabindex="0"
+            aria-label="2 étoiles"
+            onclick="setStar(2)"
+            onkeydown="if (event.key === 'Enter') setStar(2);"
+            >⭐</span
+          >
+          <span
+            class="star-btn"
+            role="button"
+            tabindex="0"
+            aria-label="3 étoiles"
+            onclick="setStar(3)"
+            onkeydown="if (event.key === 'Enter') setStar(3);"
+            >⭐</span
+          >
+          <span
+            class="star-btn"
+            role="button"
+            tabindex="0"
+            aria-label="4 étoiles"
+            onclick="setStar(4)"
+            onkeydown="if (event.key === 'Enter') setStar(4);"
+            >⭐</span
+          >
+          <span
+            class="star-btn"
+            role="button"
+            tabindex="0"
+            aria-label="5 étoiles"
+            onclick="setStar(5)"
+            onkeydown="if (event.key === 'Enter') setStar(5);"
+            >⭐</span
+          >
+        </div>
+        <div class="star-label" id="star-label">Sélectionnez une note</div>
+
+        <!-- PHOTO -->
+        <div class="fhead">
+          Photo
+          <span style="color: var(--dim); font-weight: 400">(recommandée)</span>
+        </div>
+        <div class="photo-zone" id="photo-zone">
+          <input
+            type="file"
+            id="photo-input"
+            accept="image/jpeg,image/jpg,image/png,image/webp"
+            onchange="onPhoto(this)"
+            aria-label="Choisir une photo"
+          />
+          <button
+            class="photo-rm"
+            id="photo-rm"
+            onclick="removePhoto(event)"
+            aria-label="Supprimer la photo"
+          >
+            ✕
+          </button>
+          <img id="photo-prev" alt="Aperçu de la photo" />
+          <div class="photo-inner" id="photo-inner">
+            <div class="photo-ico">📷</div>
+            <div class="photo-txt">
+              Prendre une photo<br /><b>ou touchez pour choisir</b>
+            </div>
+          </div>
+          <div class="upload-progress" id="upload-progress"></div>
+        </div>
+
+        <!-- COMMENT -->
+        <div class="fhead">
+          Commentaire
+          <span style="color: var(--dim); font-weight: 400">(optionnel)</span>
+        </div>
+        <textarea
+          id="comment"
+          rows="2"
+          maxlength="300"
+          placeholder="Ex: Nid-de-poule sur 30m après le feu rouge…"
+          oninput="updateCharCount(this)"
+        ></textarea>
+        <div class="char-count" id="char-count">0 / 300</div>
+
+        <button
+          class="submit-btn"
+          id="submit-btn"
+          onclick="submitReport()"
+          disabled
+          aria-disabled="true"
+        >
+          <div class="spin" id="submit-spin"></div>
+          <span id="submit-txt">Soumettre le signalement</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- NOTIFICATION PERMISSION BANNER -->
+    <div
+      id="notif-banner"
+      role="dialog"
+      aria-modal="false"
+      aria-label="Activer les notifications"
+    >
+      <div id="notif-banner-ico">🔔</div>
+      <div id="notif-banner-text">
+        <div id="notif-banner-title">Activer les notifications</div>
+        <div id="notif-banner-sub">
+          Soyez alerté quand votre route signalée est réparée
+        </div>
+      </div>
+      <button id="notif-accept-btn" onclick="notifBannerAccept()">
+        Activer
+      </button>
+      <button
+        id="notif-dismiss-btn"
+        onclick="notifBannerDismiss()"
+        aria-label="Fermer"
+      >
+        ✕
+      </button>
+    </div>
+
+    <!-- TOAST -->
+    <div id="toast" role="alert" aria-live="assertive"></div>
+
+    <!-- PWA INSTALL BANNER -->
+    <div
+      id="pwa-banner"
+      role="complementary"
+      aria-label="Installer l'application"
+    >
+      <div id="pwa-logo">🕳</div>
+      <div id="pwa-text">
+        <div id="pwa-title">Installer حفرة</div>
+        <div id="pwa-sub">Accès rapide depuis votre écran d'accueil</div>
+      </div>
+      <button id="pwa-install-btn" onclick="pwaInstall()">Installer</button>
+      <button id="pwa-dismiss-btn" onclick="pwaDismiss()" aria-label="Fermer">
+        ✕
+      </button>
+    </div>
+
+    <!-- iOS INSTALL TOOLTIP -->
+    <div
+      id="ios-tip"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Instructions installation iOS"
+    >
+      <div id="ios-tip-box">
+        <button id="ios-tip-close" onclick="iosTipClose()" aria-label="Fermer">
+          ✕
+        </button>
+        <div id="ios-tip-logo">🕳</div>
+        <div id="ios-tip-name">حفرة · Hafra.DZ</div>
+        <div id="ios-tip-body">
+          Pour installer l'application sur votre iPhone&nbsp;:
+        </div>
+        <div class="ios-step">
+          <span class="ios-step-n">1</span
+          ><span
+            >Appuyez sur <strong>le bouton Partager</strong>
+            <span class="ios-share-ico">⎙</span> en bas de Safari</span
+          >
+        </div>
+        <div class="ios-step">
+          <span class="ios-step-n">2</span
+          ><span
+            >Faites défiler et appuyez sur
+            <strong>« Sur l'écran d'accueil »</strong></span
+          >
+        </div>
+        <div class="ios-step">
+          <span class="ios-step-n">3</span
+          ><span>Appuyez sur <strong>Ajouter</strong> en haut à droite</span>
+        </div>
+        <button id="ios-tip-ok" onclick="iosTipClose()">Compris</button>
+      </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script type="module" src="/src/app.js"></script>
+  </body>
+</html>

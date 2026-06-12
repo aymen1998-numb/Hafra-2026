@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard | Hafra.DZ</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <script>
+    if (localStorage.getItem('hafra-admin-theme') === 'dark' || (!('hafra-admin-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  </script>
+</head>
+<body class="bg-slate-50 text-slate-900 antialiased dark:bg-[#090C12] dark:text-slate-50 selection:bg-orange-500/30">
+  <div id="root"></div>
+  <script type="module" src="/src/admin/main.tsx"></script>
+</body>
+</html>

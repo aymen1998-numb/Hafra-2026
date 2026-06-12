@@ -1,0 +1,78 @@
+{
+  "entities": {
+    "report": {
+      "title": "Report",
+      "description": "A user-submitted report about road conditions (potholes, cracks, etc.)",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "lat": { "type": "number" },
+        "lng": { "type": "number" },
+        "score": { "type": "number" },
+        "category": { "type": "string" },
+        "comment": { "type": "string" },
+        "photo_url": { "type": "string" },
+        "submitter_email": { "type": "string" },
+        "wilaya": { "type": "string" },
+        "votes": { "type": "number" },
+        "status": { "type": "string" },
+        "archived": { "type": "boolean" },
+        "archivedAt": { "type": "string" },
+        "createdAt": { "type": "string", "description": "Server timestamp when created", "format": "date-time" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["lat", "lng", "score", "category", "wilaya", "votes", "status"]
+    },
+    "admin": {
+      "title": "Admin",
+      "description": "An administrator of the application",
+      "type": "object",
+      "properties": {
+        "username": { "type": "string" },
+        "role": { "type": "string" },
+        "createdAt": { "type": "string", "description": "Server timestamp", "format": "date-time" }
+      },
+      "required": ["username", "role"]
+    },
+    "allowed_email": {
+      "title": "Allowed Email",
+      "description": "An email address explicitly allowed to register as an admin",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "addedBy": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "addedBy"]
+    },
+    "confirmation": {
+      "title": "Confirmation",
+      "description": "Record of a citizen confirming a report",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "report_id": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "report_id"]
+    }
+  },
+  "firestore": {
+    "/reports/{reportId}": {
+      "schema": { "$ref": "#/entities/report" },
+      "description": "The main collection for all public road reports."
+    },
+    "/admins/{userId}": {
+      "schema": { "$ref": "#/entities/admin" },
+      "description": "Access control records mapped by Firebase UID."
+    },
+    "/allowed_emails/{emailId}": {
+      "schema": { "$ref": "#/entities/allowed_email" },
+      "description": "Allowed admin emails."
+    },
+    "/confirmations/{confirmationId}": {
+      "schema": { "$ref": "#/entities/confirmation" },
+      "description": "Record of upvotes/confirmations to prevent double voting."
+    }
+  }
+}

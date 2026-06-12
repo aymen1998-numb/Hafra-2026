@@ -1,0 +1,76 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} { allow read, write: if false; }
+
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isSignedIn() { return request.auth != null; }
+    function isAdmin() { return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)); }
+    
+    function isValidReport(data) {
+      return data.keys().hasAll(['lat', 'lng', 'score', 'category', 'status', 'createdAt'])
+        && data.lat is number
+        && data.lng is number
+        && data.score is number && data.score >= 1 && data.score <= 5
+        && data.category is string && data.category.size() <= 50
+        && data.status is string && data.status.size() <= 20
+        && data.createdAt is string && data.createdAt.size() <= 50
+        && (data.get('wilaya', '') is string && data.get('wilaya', '').size() <= 50)
+        && (data.get('comment', '') is string && data.get('comment', '').size() <= 350)
+        && (data.get('photo_url', '') is string && data.get('photo_url', '').size() <= 1000000)
+        && (data.get('submitter_email', '') is string && data.get('submitter_email', '').size() <= 100);
+    }
+    
+    match /reports/{reportId} {
+      allow read: if true;
+      allow create: if isValidId(reportId) && isValidReport(incoming())
+                       && incoming().lat >= 18.0 && incoming().lat <= 38.0
+                       && incoming().lng >= -9.0 && incoming().lng <= 13.0
+                       && incoming().status == 'active'
+                       && incoming().get('votes', 0) == 0;
+                       
+      allow update: if isValidId(reportId) && (
+        isAdmin() ||
+        (
+          // Vote update
+          incoming().diff(existing()).affectedKeys().hasOnly(['votes']) &&
+          incoming().votes is number &&
+          incoming().votes == existing().get('votes', 0) + 1
+        )
+      );
+      
+      allow delete: if isAdmin();
+    }
+    
+    match /confirmations/{confId} {
+      allow read: if true;
+      allow create: if isValidId(confId)
+                       && incoming().keys().hasAll(['email', 'report_id'])
+                       && incoming().email is string && incoming().email.size() <= 100
+                       && incoming().report_id is string && incoming().report_id.size() <= 128
+                       && exists(/databases/$(database)/documents/reports/$(incoming().report_id));
+      allow update, delete: if isAdmin();
+    }
+    
+    match /users/{userId} {
+      allow read, write: if isAdmin();
+    }
+    
+    // Only admins can see and manage allowed_emails, except users checking their own
+    match /allowed_emails/{emailId} {
+      allow read: if isAdmin() || (isSignedIn() && resource.data.email == request.auth.token.email);
+      allow write: if isAdmin();
+    }
+    
+    match /admins/{userId} {
+      allow read: if isSignedIn() && request.auth.uid == userId; // own role
+      allow read, write: if isAdmin() || (isSignedIn() && request.auth.token.email == 'spaelfath16@gmail.com');
+      allow create: if isSignedIn() && request.auth.uid == userId && (
+        exists(/databases/$(database)/documents/allowed_emails/$(request.auth.token.email)) || 
+        request.auth.token.email == 'admin@hafra.dz'
+      );
+    }
+  }
+}
