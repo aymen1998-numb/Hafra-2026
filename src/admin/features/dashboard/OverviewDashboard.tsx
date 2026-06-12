@@ -79,15 +79,15 @@ export default function OverviewDashboard() {
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
          {kpis.map((kpi, idx) => (
-           <div key={idx} className="bg-white dark:bg-[#121826] rounded-2xl border border-slate-200 dark:border-white/5 p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-              <div className="absolute top-0 right-0 p-4 opacity-50 group-hover:opacity-100 transition-opacity">
-                 <div className={`p-2 rounded-xl ${kpi.bg}`}>
-                    <kpi.icon className={`w-5 h-5 ${kpi.color}`} />
-                 </div>
-              </div>
-              <div className="mt-2">
-                 <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{kpi.name}</p>
-                 <div className="flex items-baseline mt-2 space-x-2">
+            <div key={idx} className="bg-white/90 dark:bg-[#121826]/40 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-white/5 p-5 shadow-sm hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] dark:hover:shadow-[0_8px_30px_rgba(249,115,22,0.04)] hover:border-orange-500/25 dark:hover:border-orange-500/25 transition-all duration-300 relative overflow-hidden group hover:-translate-y-0.5">
+               <div className="absolute top-0 right-0 p-4 opacity-50 group-hover:opacity-100 transition-opacity">
+                  <div className={`p-2.5 rounded-xl transition-all duration-300 group-hover:rotate-6 ${kpi.bg}`}>
+                     <kpi.icon className={`w-5 h-5 ${kpi.color}`} />
+                  </div>
+               </div>
+               <div className="mt-2">
+                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{kpi.name}</p>
+                  <div className="flex items-baseline mt-2 space-x-2">
                     <h2 className="text-3xl font-bold text-slate-900 dark:text-white">{kpi.value.toLocaleString()}</h2>
                     <span className={`flex items-center text-xs font-semibold ${kpi.isUp ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                        {kpi.isUp ? <ArrowUpRight className="w-3 h-3 mr-0.5" /> : <ArrowDownRight className="w-3 h-3 mr-0.5" />}

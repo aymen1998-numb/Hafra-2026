@@ -97,15 +97,15 @@ export default function DashboardLayout() {
                          key={item.name}
                          to={item.path}
                          className={({ isActive }) => 
-                           `flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group ${
-                             isActive 
-                               ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400' 
-                               : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-slate-50'
-                           }`
+                            `flex items-center px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 ease-out group relative border-l-2 ${
+                              isActive 
+                                ? 'border-orange-500 bg-orange-500/5 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400 shadow-[inset_1px_0_0_rgba(249,115,22,0.1)]' 
+                                : 'border-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.02] hover:text-slate-900 dark:hover:text-slate-50'
+                            }`
                          }
                          title={!sidebarOpen ? item.name : undefined}
                       >
-                         <item.icon className={`w-5 h-5 flex-shrink-0 ${sidebarOpen ? 'mr-3' : 'md:mr-0 md:mx-auto'}`} />
+                         <item.icon className={`w-5 h-5 flex-shrink-0 transition-transform duration-300 group-hover:scale-110 ${sidebarOpen ? 'mr-3' : 'md:mr-0 md:mx-auto'}`} />
                          <span className={`${!sidebarOpen && 'md:hidden'}`}>{item.name}</span>
                       </NavLink>
                    ))}
