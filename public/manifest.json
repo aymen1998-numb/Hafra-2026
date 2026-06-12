@@ -8,13 +8,13 @@
   "theme_color": "#090C12",
   "icons": [
     {
-      "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjIyIiBmaWxsPSIjMDkwQzEyIiAvPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0ZGNTcyMiIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0ic3F1YXJlIiBzdHJva2UtbGluZWpvaW49Im1pdGVyIj48cGF0aCBkPSJNIDgzLjUgNDEgTCA3MSA0MSBMIDcxIDU3IEwgNTggNTciIC8+PHJlY3QgeD0iNDUuNSIgeT0iNDUiIHdpZHRoPSIxMCIgaGVpZ2h0PSIxMiIgLz48cGF0aCBkPSJNIDU4IDU3IEwgNDUuNSA1NyIgLz48cGF0aCBkPSJNID41LjUgNTcgTCAzOSA1NyBMIDMzIDY5IiBzdHJva2UtbGluZWNhcD0icm91bmQiIC8+PHJlY3QgeD0iMTciIHk9IjQ1IiB3aWR0aD0iMTAiIGhlaWdodD0iMTIiIC8+PC9nPjxnIGZpbGw9IiNGRjU3MjIiPjxyZWN0IHg9IjQ4IiB5PSIyOS41IiB3aWR0aD0iNSIgaGVpZ2h0PSI1IiByeD0iMSIgLz48cmVjdCB4PSIxNi41IiB5PSIyOS41IiB3aWR0aD0iNSIgaGVpZ2h0PSI1IiByeD0iMSIgLz48cmVjdCB4PSIyMi41IiB5PSIyOS41IiB3aWR0aD0iNSIgaGVpZ2h0PSI1IiByeD0iMSIgLz48L2c+PC9zdmc+",
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23121214'/%3E%3Ctext y='70' x='50' text-anchor='middle' font-size='60'%3E🚨%3C/text%3E%3C/svg%3E",
       "sizes": "192x192",
       "type": "image/svg+xml",
       "purpose": "any maskable"
     },
     {
-      "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjIyIiBmaWxsPSIjMDkwQzEyIiAvPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0ZGNTcyMiIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0ic3F1YXJlIiBzdHJva2UtbGluZWpvaW49Im1pdGVyIj48cGF0aCBkPSJNIDgzLjUgNDEgTCA3MSA0MSBMIDcxIDU3IEwgNTggNTciIC8+PHJlY3QgeD0iNDUuNSIgeT0iNDUiIHdpZHRoPSIxMCIgaGVpZ2h0PSIxMiIgLz48cGF0aCBkPSJNIDU4IDU3IEwgNDUuNSA1NyIgLz48cGF0aCBkPSJNID41LjUgNTcgTCAzOSA1NyBMIDMzIDY5IiBzdHJva2UtbGluZWNhcD0icm91bmQiIC8+PHJlY3QgeD0iMTciIHk9IjQ1IiB3aWR0aD0iMTAiIGhlaWdodD0iMTIiIC8+PC9nPjxnIGZpbGw9IiNGRjU3MjIiPjxyZWN0IHg9IjQ4IiB5PSIyOS41IiB3aWR0aD0iNSIgaGVpZ2h0PSI1IiByeD0iMSIgLz48cmVjdCB4PSIxNi41IiB5PSIyOS41IiB3aWR0aD0iNSIgaGVpZ2h0PSI1IiByeD0iMSIgLz48cmVjdCB4PSIyMi41IiB5PSIyOS41IiB3aWR0aD0iNSIgaGVpZ2h0PSI1IiByeD0iMSIgLz48L2c+PC9zdmc+",
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23121214'/%3E%3Ctext y='70' x='50' text-anchor='middle' font-size='60'%3E🚨%3C/text%3E%3C/svg%3E",
       "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "any maskable"
