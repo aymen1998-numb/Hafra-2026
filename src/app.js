@@ -284,7 +284,8 @@ window.toggleAuth = async function() {
 
 
 // Map
-const map = L.map('map', { center:[28, 1.66], zoom:5, minZoom:4, maxZoom:19, zoomControl:true, touchZoom: true, doubleClickZoom: true, tap: true });
+const map = L.map('map', { center:[28, 1.66], zoom:5, minZoom:4, maxZoom:19, zoomControl:false, touchZoom: true, doubleClickZoom: true, tap: true });
+L.control.zoom({ position: 'bottomleft' }).addTo(map);
 let currentTileLayer = null;
 
 const roadLayerGroup = L.layerGroup().addTo(map);
