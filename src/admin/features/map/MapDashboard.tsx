@@ -95,7 +95,11 @@ export default function MapDashboard() {
 
         const qRoads = query(collection(db, 'roads'));
         const snapRoads = await getDocs(qRoads);
-        setRoads(snapRoads.docs.map(d => ({ id: d.id, ...d.data() })));
+        setRoads(snapRoads.docs.map(d => {
+          const data = d.data();
+          const coords = (data.coordinates || []).map((pt: any) => [pt.lat, pt.lng]);
+          return { id: d.id, ...data, coordinates: coords };
+        }));
       } catch (error) {
         console.error("Map data fetch error:", error);
       } finally {
@@ -135,14 +139,15 @@ export default function MapDashboard() {
       return;
     }
     try {
+      const payloadCoordinates = drawnPoints.map(pt => ({ lat: pt[0], lng: pt[1] }));
       const payload = {
         name: roadName,
         quality: roadQuality,
-        coordinates: drawnPoints,
+        coordinates: payloadCoordinates,
         createdAt: new Date().toISOString()
       };
       const docRef = await addDoc(collection(db, 'roads'), payload);
-      setRoads(prev => [...prev, { id: docRef.id, ...payload }]);
+      setRoads(prev => [...prev, { id: docRef.id, ...payload, coordinates: drawnPoints }]);
       
       // Reset drawing state
       setIsDrawing(false);
@@ -204,10 +209,11 @@ export default function MapDashboard() {
     }
     try {
       const roadRef = doc(db, 'roads', selectedRoadId);
+      const payloadCoordinates = editCoordinates.map(pt => ({ lat: pt[0], lng: pt[1] }));
       await updateDoc(roadRef, {
         name: editName,
         quality: editQuality,
-        coordinates: editCoordinates
+        coordinates: payloadCoordinates
       });
       
       setRoads(prev => prev.map(r => r.id === selectedRoadId ? { ...r, name: editName, quality: editQuality, coordinates: editCoordinates } : r));
@@ -251,17 +257,20 @@ export default function MapDashboard() {
       const part1Coords = editCoordinates.slice(0, idx + 1);
       const part2Coords = editCoordinates.slice(idx);
 
+      const part1PayloadCoords = part1Coords.map(pt => ({ lat: pt[0], lng: pt[1] }));
+      const part2PayloadCoords = part2Coords.map(pt => ({ lat: pt[0], lng: pt[1] }));
+
       const payload1 = {
         name: `${editName} (Part A)`,
         quality: editQuality,
-        coordinates: part1Coords,
+        coordinates: part1PayloadCoords,
         createdAt: new Date().toISOString()
       };
 
       const payload2 = {
         name: `${editName} (Part B)`,
         quality: editQuality,
-        coordinates: part2Coords,
+        coordinates: part2PayloadCoords,
         createdAt: new Date().toISOString()
       };
 
@@ -277,8 +286,8 @@ export default function MapDashboard() {
         const filtered = prev.filter(r => r.id !== selectedRoadId);
         return [
           ...filtered,
-          { id: docRef1.id, ...payload1 },
-          { id: docRef2.id, ...payload2 }
+          { id: docRef1.id, ...payload1, coordinates: part1Coords },
+          { id: docRef2.id, ...payload2, coordinates: part2Coords }
         ];
       });
 

@@ -623,7 +623,11 @@ async function loadReports() {
 
     try {
       const snapRoads = await getDocs(collection(db, 'roads'));
-      roads = snapRoads.docs.map(d => ({ id: d.id, ...d.data() }));
+      roads = snapRoads.docs.map(d => {
+        const data = d.data();
+        const coords = (data.coordinates || []).map(pt => [pt.lat, pt.lng]);
+        return { id: d.id, ...data, coordinates: coords };
+      });
     } catch (errRoads) {
       console.warn('[hafra] Load roads failed:', errRoads);
     }
