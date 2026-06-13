@@ -151,6 +151,8 @@ let gpsActiveRouteLayers = [];
 let gpsStartCoords = null;
 let gpsEndCoords = null;
 let gpsClickSelectionMode = null;
+let gpsStartCachedAddress = "";
+let gpsEndCachedAddress = "";
 
 let confirmedIds = new Set();
 try { confirmedIds = new Set(JSON.parse(localStorage.getItem('hf_confirmed') || '[]')); } catch {}
@@ -1883,7 +1885,7 @@ window.calculatePavedRoute = async function() {
     }
     
     let endLoc = gpsEndCoords;
-    if (!endLoc || endInput !== `${gpsEndCoords[0].toFixed(5)}, ${gpsEndCoords[1].toFixed(5)}`) {
+    if (!endLoc || (endInput !== `${gpsEndCoords[0].toFixed(5)}, ${gpsEndCoords[1].toFixed(5)}` && endInput !== gpsEndCachedAddress)) {
       endLoc = await geocode(endInput);
       if (!endLoc) {
         showToast("Impossible de localiser la destination");
@@ -2095,11 +2097,133 @@ window.selectRouteHighlight = function(type) {
   }
 };
 
-// Initialize key listener bindings
+// Debounce helper
+function debounce(func, delay) {
+  let timer;
+  return function(...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => func.apply(this, args), delay);
+  };
+}
+
+// Fetch and render search suggestions
+async function fetchSearchSuggestions(queryText, containerId, inputId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  
+  if (!queryText || queryText.trim().length < 3) {
+    container.innerHTML = '';
+    container.style.display = 'none';
+    return;
+  }
+  
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(queryText)}&format=json&limit=5&countrycodes=dz`);
+    const data = await res.json();
+    
+    if (data && data.length > 0) {
+      container.innerHTML = '';
+      data.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'gps-suggestion-item';
+        div.textContent = item.display_name;
+        // Keyboard focusable
+        div.tabIndex = 0;
+        
+        const selectItem = () => {
+          document.getElementById(inputId).value = item.display_name;
+          if (inputId === 'gps-start-input') {
+            gpsStartCoords = [parseFloat(item.lat), parseFloat(item.lon)];
+            gpsStartCachedAddress = item.display_name;
+          } else {
+            gpsEndCoords = [parseFloat(item.lat), parseFloat(item.lon)];
+            gpsEndCachedAddress = item.display_name;
+          }
+          container.innerHTML = '';
+          container.style.display = 'none';
+          showToast("Position sélectionnée !");
+        };
+        
+        div.addEventListener('click', selectItem);
+        div.addEventListener('keydown', e => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            selectItem();
+          }
+        });
+        container.appendChild(div);
+      });
+      container.style.display = 'block';
+    } else {
+      container.innerHTML = '<div class="gps-suggestion-item" style="color: var(--dim2); cursor: default;">Aucun résultat trouvé</div>';
+      container.style.display = 'block';
+    }
+  } catch (err) {
+    console.error("Suggestions fetch error:", err);
+  }
+}
+
+// Initialize GPS panel autocomplete suggestions
 setTimeout(() => {
   const startInput = document.getElementById('gps-start-input');
   const endInput = document.getElementById('gps-end-input');
-  if (startInput) startInput.addEventListener('keydown', e => { if (e.key === 'Enter') window.calculatePavedRoute(); });
-  if (endInput) endInput.addEventListener('keydown', e => { if (e.key === 'Enter') window.calculatePavedRoute(); });
+  const startSug = document.getElementById('gps-start-suggestions');
+  const endSug = document.getElementById('gps-end-suggestions');
+  
+  if (startInput) {
+    startInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        startSug.style.display = 'none';
+        window.calculatePavedRoute();
+      }
+    });
+    
+    const debouncedStart = debounce((val) => {
+      fetchSearchSuggestions(val, 'gps-start-suggestions', 'gps-start-input');
+    }, 450);
+    
+    startInput.addEventListener('input', e => {
+      if (!e.target.value.trim()) {
+        gpsStartCoords = null;
+        gpsStartCachedAddress = "";
+        startSug.style.display = 'none';
+      } else {
+        debouncedStart(e.target.value);
+      }
+    });
+  }
+  
+  if (endInput) {
+    endInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        endSug.style.display = 'none';
+        window.calculatePavedRoute();
+      }
+    });
+    
+    const debouncedEnd = debounce((val) => {
+      fetchSearchSuggestions(val, 'gps-end-suggestions', 'gps-end-input');
+    }, 450);
+    
+    endInput.addEventListener('input', e => {
+      if (!e.target.value.trim()) {
+        gpsEndCoords = null;
+        gpsEndCachedAddress = "";
+        endSug.style.display = 'none';
+      } else {
+        debouncedEnd(e.target.value);
+      }
+    });
+  }
+  
+  // Close suggestions when clicking outside
+  document.addEventListener('click', e => {
+    if (startSug && e.target !== startInput && !startSug.contains(e.target)) {
+      startSug.style.display = 'none';
+    }
+    if (endSug && e.target !== endInput && !endSug.contains(e.target)) {
+      endSug.style.display = 'none';
+    }
+  });
 }, 2000);
 

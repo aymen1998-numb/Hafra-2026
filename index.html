@@ -190,18 +190,20 @@
           <label class="gps-label" for="gps-start-input">Départ</label>
           <div class="gps-input-wrapper">
             <span class="gps-input-icon">🟢</span>
-            <input type="text" id="gps-start-input" placeholder="Ma position GPS ou adresse..." />
+            <input type="text" id="gps-start-input" placeholder="Ma position GPS ou adresse..." autocomplete="off" />
             <button class="gps-action-btn" onclick="window.useGpsCurrentLocation()" title="Ma position actuelle">🎯</button>
           </div>
+          <div id="gps-start-suggestions" class="gps-suggestions-box" style="display: none;"></div>
         </div>
         
         <div class="gps-input-group">
           <label class="gps-label" for="gps-end-input">Destination</label>
           <div class="gps-input-wrapper">
             <span class="gps-input-icon">🔴</span>
-            <input type="text" id="gps-end-input" placeholder="Rechercher une destination..." />
+            <input type="text" id="gps-end-input" placeholder="Rechercher une destination..." autocomplete="off" />
             <button class="gps-action-btn" id="gps-select-map-btn" onclick="window.enableMapClickSelection()" title="Sélectionner sur la carte">📍</button>
           </div>
+          <div id="gps-end-suggestions" class="gps-suggestions-box" style="display: none;"></div>
         </div>
         
         <button class="gps-search-btn" id="gps-submit-btn" onclick="window.calculatePavedRoute()">

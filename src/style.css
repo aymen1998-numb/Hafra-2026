@@ -478,6 +478,43 @@
       display: flex;
       flex-direction: column;
       gap: 6px;
+      position: relative;
+    }
+    .gps-suggestions-box {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: var(--s2);
+      border: 1px solid var(--bdr2);
+      border-radius: 12px;
+      margin-top: 4px;
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 1000;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      scrollbar-width: thin;
+      backdrop-filter: blur(10px);
+    }
+    .gps-suggestion-item {
+      padding: 10px 12px;
+      font-size: 12.5px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--bdr);
+      transition: background 0.15s, color 0.15s;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--txt);
+      text-align: left;
+    }
+    .gps-suggestion-item:last-child {
+      border-bottom: none;
+    }
+    .gps-suggestion-item:hover, .gps-suggestion-item:focus {
+      background: var(--s3);
+      color: var(--acc);
+      outline: none;
     }
     .gps-label {
       font-size: 12px;
