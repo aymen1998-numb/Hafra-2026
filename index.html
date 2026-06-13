@@ -125,24 +125,30 @@
         <div
           class="ptab on"
           role="tab"
+          tabindex="0"
           aria-selected="true"
           onclick="setTab('feed', this)"
+          onkeydown="if (event.key === 'Enter' || event.key === ' ') { setTab('feed', this); event.preventDefault(); }"
         >
           Fil
         </div>
         <div
           class="ptab"
           role="tab"
+          tabindex="0"
           aria-selected="false"
           onclick="setTab('stats', this)"
+          onkeydown="if (event.key === 'Enter' || event.key === ' ') { setTab('stats', this); event.preventDefault(); }"
         >
           Stats
         </div>
         <div
           class="ptab"
           role="tab"
+          tabindex="0"
           aria-selected="false"
           onclick="setTab('layers', this)"
+          onkeydown="if (event.key === 'Enter' || event.key === ' ') { setTab('layers', this); event.preventDefault(); }"
         >
           Carte
         </div>
