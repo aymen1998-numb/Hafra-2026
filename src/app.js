@@ -2036,6 +2036,9 @@ function renderGPSResultsUI(scoredRoutes, bestRoute, shortestRoute, isDetourNece
         <div class="gps-route-hazards clean">
           <span>🛡️ ${shortestRoute.potholeCount - bestRoute.potholeCount} nids-de-poule évités !</span>
         </div>
+        <button class="gps-go-btn" onclick="event.stopPropagation(); window.openExternalNavigation('safe')">
+          🧭 Démarrer la navigation (GPS)
+        </button>
       </div>
       <div class="gps-route-card" onclick="window.selectRouteHighlight('bumpy')">
         <span class="gps-route-badge bumpy">Déconseillé</span>
@@ -2047,6 +2050,9 @@ function renderGPSResultsUI(scoredRoutes, bestRoute, shortestRoute, isDetourNece
         <div class="gps-route-hazards dirty">
           <span>⚠️ Contient ${shortestRoute.potholeCount} nids-de-poule</span>
         </div>
+        <button class="gps-go-btn" onclick="event.stopPropagation(); window.openExternalNavigation('bumpy')">
+          🧭 Démarrer la navigation (GPS)
+        </button>
       </div>
     `;
   } else {
@@ -2061,6 +2067,9 @@ function renderGPSResultsUI(scoredRoutes, bestRoute, shortestRoute, isDetourNece
         <div class="gps-route-hazards clean">
           <span>✨ 0 nids-de-poule détectés</span>
         </div>
+        <button class="gps-go-btn" onclick="event.stopPropagation(); window.openExternalNavigation('optimal')">
+          🧭 Démarrer la navigation (GPS)
+        </button>
       </div>
     `;
   }
@@ -2068,6 +2077,52 @@ function renderGPSResultsUI(scoredRoutes, bestRoute, shortestRoute, isDetourNece
   container.innerHTML = html;
   window.currentGpsRoutes = { bestRoute, shortestRoute, isDetourNecessary };
 }
+
+window.openExternalNavigation = function(type) {
+  const routes = window.currentGpsRoutes;
+  if (!routes) return;
+  
+  let targetRoute;
+  if (type === 'safe' || type === 'optimal') {
+    targetRoute = routes.bestRoute;
+  } else {
+    targetRoute = routes.shortestRoute;
+  }
+  
+  if (!targetRoute || !targetRoute.coordinates || targetRoute.coordinates.length < 2) {
+    showToast("Itinéraire invalide");
+    return;
+  }
+  
+  const coords = targetRoute.coordinates; // Array of [lat, lng]
+  const origin = coords[0];
+  const dest = coords[coords.length - 1];
+  
+  // Sample up to 6 waypoints from the middle of the route coordinates to guide Google Maps
+  const waypoints = [];
+  if (coords.length > 2) {
+    const numWaypoints = Math.min(6, coords.length - 2);
+    // Evenly space intermediate indices
+    const step = (coords.length - 2) / (numWaypoints + 1);
+    for (let i = 1; i <= numWaypoints; i++) {
+      const idx = Math.round(1 + i * step);
+      if (idx > 0 && idx < coords.length - 1) {
+        waypoints.push(coords[idx]);
+      }
+    }
+  }
+  
+  const originStr = `${origin[0]},${origin[1]}`;
+  const destStr = `${dest[0]},${dest[1]}`;
+  
+  let waypointStr = '';
+  if (waypoints.length > 0) {
+    waypointStr = '&waypoints=' + waypoints.map(pt => `${pt[0]},${pt[1]}`).join('|');
+  }
+  
+  const url = `https://www.google.com/maps/dir/?api=1&origin=${originStr}&destination=${destStr}${waypointStr}&travelmode=driving`;
+  window.open(url, '_blank');
+};
 
 window.selectRouteHighlight = function(type) {
   const cards = document.querySelectorAll('.gps-route-card');

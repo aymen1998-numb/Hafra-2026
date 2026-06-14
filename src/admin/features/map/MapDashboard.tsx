@@ -368,15 +368,29 @@ export default function MapDashboard() {
                        placeholder="Road Name (e.g. N1, RN 5)" 
                        className="w-full bg-white dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-orange-500 text-slate-800 dark:text-white"
                      />
-                     <select 
-                       value={roadQuality}
-                       onChange={(e) => setRoadQuality(e.target.value)}
-                       className="w-full bg-white dark:bg-[#121826] border border-slate-200 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-orange-500 text-slate-800 dark:text-white"
-                     >
-                       <option value="bad">🔴 Bad / Damaged (Red)</option>
-                       <option value="average">🟡 Fair / Moderate (Orange)</option>
-                       <option value="good">🟢 Good / Repaired (Green)</option>
-                     </select>
+                     <div className="flex gap-1.5 mt-0.5">
+                        <button
+                          type="button"
+                          onClick={() => setRoadQuality('bad')}
+                          className={`flex-1 py-1.5 px-2 rounded-lg border text-[11px] font-bold transition-all cursor-pointer ${roadQuality === 'bad' ? 'bg-red-500/20 border-red-500 text-red-600 dark:text-red-400' : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400'}`}
+                        >
+                          🔴 Bad
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setRoadQuality('average')}
+                          className={`flex-1 py-1.5 px-2 rounded-lg border text-[11px] font-bold transition-all cursor-pointer ${roadQuality === 'average' ? 'bg-orange-500/20 border-orange-500 text-orange-600 dark:text-orange-400' : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400'}`}
+                        >
+                          🟡 Fair
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setRoadQuality('good')}
+                          className={`flex-1 py-1.5 px-2 rounded-lg border text-[11px] font-bold transition-all cursor-pointer ${roadQuality === 'good' ? 'bg-emerald-500/20 border-emerald-500 text-emerald-600 dark:text-emerald-400' : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400'}`}
+                        >
+                          🟢 Good
+                        </button>
+                      </div>
                      
                      <div className="text-[10px] text-slate-500 dark:text-slate-400 flex justify-between">
                        <span>Placed nodes: <span className="font-bold">{drawnPoints.length}</span></span>
@@ -505,15 +519,29 @@ export default function MapDashboard() {
 
                <div className="flex flex-col gap-1">
                  <label className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Condition Quality</label>
-                 <select
-                   value={editQuality}
-                   onChange={(e) => setEditQuality(e.target.value)}
-                   className="w-full bg-white dark:bg-[#121826] border border-slate-200 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-orange-500 text-slate-800 dark:text-white"
-                 >
-                   <option value="bad">🔴 Bad / Damaged (Red)</option>
-                   <option value="average">🟡 Fair / Moderate (Orange)</option>
-                   <option value="good">🟢 Good / Repaired (Green)</option>
-                 </select>
+                 <div className="flex gap-1.5 mt-0.5">
+                    <button
+                      type="button"
+                      onClick={() => setEditQuality('bad')}
+                      className={`flex-1 py-1.5 px-2 rounded-lg border text-[11px] font-bold transition-all cursor-pointer ${editQuality === 'bad' ? 'bg-red-500/20 border-red-500 text-red-600 dark:text-red-400' : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400'}`}
+                    >
+                      🔴 Bad
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditQuality('average')}
+                      className={`flex-1 py-1.5 px-2 rounded-lg border text-[11px] font-bold transition-all cursor-pointer ${editQuality === 'average' ? 'bg-orange-500/20 border-orange-500 text-orange-600 dark:text-orange-400' : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400'}`}
+                    >
+                      🟡 Fair
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditQuality('good')}
+                      className={`flex-1 py-1.5 px-2 rounded-lg border text-[11px] font-bold transition-all cursor-pointer ${editQuality === 'good' ? 'bg-emerald-500/20 border-emerald-500 text-emerald-600 dark:text-emerald-400' : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400'}`}
+                    >
+                      🟢 Good
+                    </button>
+                  </div>
                </div>
 
                <div className="border-t border-slate-100 dark:border-white/5 pt-2 flex flex-col">
@@ -653,34 +681,19 @@ export default function MapDashboard() {
               <Polyline 
                 key={road.id} 
                 positions={positions} 
-                pathOptions={{ color: color, weight: 6 }}
+                pathOptions={{ color: color, weight: 6, opacity: 0.8 }}
                 eventHandlers={{
                   click: () => {
                     handleSelectRoad(road);
+                  },
+                  mouseover: (e) => {
+                    e.target.setStyle({ weight: 9, opacity: 1.0 });
+                  },
+                  mouseout: (e) => {
+                    e.target.setStyle({ weight: 6, opacity: 0.8 });
                   }
                 }}
-              >
-                <Popup className="premium-popup">
-                  <div className="p-1 min-w-[150px]">
-                    <strong className="block text-sm text-slate-900 border-b pb-1 mb-1">{road.name || 'Unnamed Road'}</strong>
-                    <span className="text-xs text-slate-600 block mb-2">Quality: <span className="font-bold capitalize">{road.quality}</span></span>
-                    <div className="flex gap-1">
-                      <button 
-                        onClick={() => handleSelectRoad(road)} 
-                        className="flex-1 text-xs bg-orange-600 hover:bg-orange-700 text-white font-semibold py-1 px-2 rounded transition-colors cursor-pointer"
-                      >
-                        Edit Road
-                      </button>
-                      <button 
-                        onClick={() => handleDeleteRoad(road.id)} 
-                        className="text-xs bg-red-500 hover:bg-red-600 text-white font-semibold py-1 px-2.5 rounded transition-colors cursor-pointer"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                </Popup>
-              </Polyline>
+              />
             );
           })}
 

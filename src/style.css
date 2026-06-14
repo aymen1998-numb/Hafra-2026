@@ -48,7 +48,7 @@
     /* Panel */
     #panel{position:absolute;top:0;left:0;width:var(--panel);height:100%;z-index:800;background:var(--s1);border-right:1px solid var(--bdr);display:flex;flex-direction:column;transform:translateX(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1);}
     #panel.open{transform:translateX(0);}
-    @media(max-width:600px){:root{--panel:100%;}}
+    @media(max-width:600px){:root{--panel:100%;} .pbody{padding-bottom:120px;}}
     .panel-top{padding:64px 18px 14px;border-bottom:1px solid var(--bdr);}
     .panel-title{font-size:26px;font-weight:800;color:var(--acc);}
     .panel-sub{font-size:10px;color:var(--dim);font-family:'JetBrains Mono',monospace;letter-spacing:1.5px;margin-top:1px;}
@@ -729,4 +729,34 @@
       outline: 3px solid var(--acc) !important;
       outline-offset: 2px !important;
     }
+
+    /* GPS Navigation External Go Button */
+    .gps-go-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: 100%;
+      margin-top: 10px;
+      padding: 9px 12px;
+      background: linear-gradient(135deg, var(--acc) 0%, #ff7043 100%);
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      font-family: 'Cairo', sans-serif;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(255, 87, 34, 0.25);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .gps-go-btn:hover {
+      transform: translateY(-1.5px);
+      box-shadow: 0 6px 16px rgba(255, 87, 34, 0.35);
+      background: linear-gradient(135deg, #ff7043 0%, var(--acc) 100%);
+    }
+    .gps-go-btn:active {
+      transform: translateY(0.5px);
+    }
+
 
